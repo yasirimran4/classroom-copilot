@@ -33,10 +33,11 @@ def create_app():
     return build_interface(deps=deps)
 
 
+demo = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
-    app.launch(
+    demo.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=int(os.getenv("PORT", "7860")),
         theme=gr.themes.Default(primary_hue="blue"),
     )

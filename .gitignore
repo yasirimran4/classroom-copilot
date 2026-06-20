@@ -1,3 +1,7 @@
-/venv
+venv/
+.venv/
+__pycache__/
+*.py[cod]
 .env
-
+generated_audio/*.mp3
+.DS_Store

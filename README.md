@@ -1,3 +1,14 @@
+---
+title: Classroom Copilot
+emoji: 🎓
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: 6.18.0
+app_file: app.py
+pinned: false
+---
+
 # Classroom Copilot
 
 **Classroom Copilot** is a voice-enabled AI teaching assistant built for government school classrooms. It helps teachers conduct live sessions on a smart board using natural speech or text commands, and returns educational responses with visual content and audio feedback.
@@ -307,6 +318,85 @@ This is a **prototype**, not production infrastructure. The project intentionall
 - Enterprise scaling patterns
 
 Gemini and TTS outputs depend on network availability and API quotas. Speech quality and latency may vary based on hardware and model size.
+
+---
+
+## Deploy on Hugging Face Spaces
+
+This repo is configured for [Hugging Face Spaces](https://huggingface.co/docs/hub/spaces) with the Gradio SDK.
+
+### What the code does on HF
+
+| File | Role on Spaces |
+|------|----------------|
+| `app.py` | Exposes `demo` (Gradio app). HF loads this automatically. Uses `PORT` from the platform. |
+| `requirements.txt` | Dependencies installed at build time. |
+| `README.md` | YAML frontmatter at the top tells HF to use Gradio 6.18 and `app.py`. |
+| `.env` | **Not uploaded.** Secrets are set in the Space UI instead. |
+
+At runtime, `load_dotenv()` is harmless on HF; `GEMINI_API_KEY` and other vars come from **Space secrets** (Settings → Repository secrets).
+
+### Recommended Space secrets
+
+| Secret | Value | Why |
+|--------|-------|-----|
+| `GEMINI_API_KEY` | Your Google AI key | Required for real Gemini responses |
+| `STT_USE_MOCK` | `true` | **Recommended on free CPU.** Skips Faster Whisper (heavy/slow on free tier). Use text input or mock STT. |
+| `WHISPER_MODEL_SIZE` | `tiny` | Only if `STT_USE_MOCK=false` |
+| `EDGE_TTS_VOICE` | `en-IN-NeerjaNeural` | Optional; default is fine |
+
+### Your manual steps
+
+1. **Create a Hugging Face account** at [huggingface.co/join](https://huggingface.co/join) if you do not have one.
+
+2. **Create a new Space**
+   - Go to [huggingface.co/new-space](https://huggingface.co/new-space)
+   - Name: e.g. `classroom-copilot`
+   - SDK: **Gradio**
+   - Visibility: Public (or Private)
+   - Do **not** initialize with a template if you are pushing this repo (empty Space is fine).
+
+3. **Push this project to the Space** (from your machine):
+
+   ```bash
+   cd /home/yasir/Desktop/Projects/classroom-copilot
+   git init
+   git add .
+   git commit -m "Prepare Classroom Copilot for Hugging Face Spaces"
+   git remote add space https://huggingface.co/spaces/YOUR_USERNAME/classroom-copilot
+   git push -u space main
+   ```
+
+   Replace `YOUR_USERNAME` and `classroom-copilot` with your HF username and Space name.
+
+   **Authentication:** HF will ask for credentials. Use a [User Access Token](https://huggingface.co/settings/tokens) with **write** permission when prompted (password is often disabled; token is required).
+
+   If your default branch is `master`, use `git push -u space master` or rename to `main` first.
+
+4. **Add secrets in the Space**
+   - Open your Space → **Settings** → **Repository secrets**
+   - Add `GEMINI_API_KEY` with your key
+   - Add `STT_USE_MOCK` = `true` (recommended for first deploy)
+
+5. **Wait for the build**
+   - HF installs `requirements.txt` and starts the app (usually 2–5 minutes).
+   - Open `https://huggingface.co/spaces/YOUR_USERNAME/classroom-copilot`
+
+6. **Test in the browser**
+   - Allow microphone if you use voice (with mock STT, mic still records but transcription may be placeholder).
+   - Try text: e.g. `Explain photosynthesis simply`
+   - Try quiz: `Generate quiz on fractions`
+
+### If the build fails
+
+- **Out of memory:** Set secret `STT_USE_MOCK=true` and redeploy (Settings → Factory rebuild).
+- **Missing API key:** Responses fall back to mock text; add `GEMINI_API_KEY` secret.
+- **Slow first request:** Whisper model download on first run; use mock STT or upgrade to a GPU Space for real STT.
+
+### What you must not commit
+
+- `.env` (contains your API key) — already in `.gitignore`
+- `venv/` — already ignored
 
 ---
 
